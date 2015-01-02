@@ -7,12 +7,13 @@ retrieve <- function(){
                         AND uri_path IN ('/wiki/FSArchiver','/wiki/Additive_white_Gaussian_noise',
                         '/wiki/Ariana_Grande','/wiki/Fidel_Castro','/wiki/Surfers_Paradise_Meter_Maids',
                         '/wiki/Fugio_Cent') AND webrequest_source IN('text','mobile');")
-  data <- data[data$uri_host %in% c(bots,humans,plausibly_bots),]
-  data$type[data$uri_host %in% bots] <- "bot"
-  data$type[data$uri_host %in% humans] <- "human"
-  data$type[data$uri_host %in% plausibly_bots] <- "plausibly bots"
+  data <- data[data$uri_path %in% c(bots,humans,plausibly_bots),]
+  data$type[data$uri_path %in% bots] <- "bot"
+  data$type[data$uri_path %in% humans] <- "human"
+  data$type[data$uri_path %in% plausibly_bots] <- "plausibly bots"
   
   #Geolocate to identify country and TZ
+  data$ip[!data$x_forwarded_for == "-"] <- data$x_forwarded_for[!data$x_forwarded_for == "-"]
   data <- cbind(data,geolookup(data$ip, filename = "/usr/local/share/GeoIP/GeoIP2-City.mmdb",
                                c("country_iso","timezone")))
   
@@ -25,8 +26,7 @@ retrieve <- function(){
   }, by = "timezone"]
   
   #Handle XFFs and generate hashes
-  data$ip[!data$x_forwarded_for == "-"] <- data$x_forwarded_for[!data$x_forwarded_for == "-"]
-  data$uuid <- cryptohash(paste0(data$ip,data$user_agent))
+  data$fingerprint <- cryptohash(paste0(data$ip,data$user_agent),"md5")
   
   #Return
   return(data)
