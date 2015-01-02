@@ -1,7 +1,7 @@
 retrieve <- function(){
   
   #Retrieve and tag
-  data <- dep_hive_query("SELECT dt,ip,x_forwarded_for,referer,user_agent, uri_path FROM
+  data <- dep_hive_query("SELECT dt,ip,x_forwarded_for,referer,user_agent, uri_path AS page FROM
                         wmf_raw.webrequest WHERE year = 2014 AND month = 12 AND day
                         BETWEEN 15 AND 21 AND uri_host IN('en.wikipedia.org','en.m.wikipedia.org')
                         AND uri_path IN ('/wiki/FSArchiver','/wiki/Additive_white_Gaussian_noise',
@@ -27,6 +27,10 @@ retrieve <- function(){
   
   #Handle XFFs and generate hashes
   data$fingerprint <- cryptohash(paste0(data$ip,data$user_agent),"md5")
+  
+  #Sanitise
+  data$page <- gsub(x = data$page, pattern = "/wiki/", replacement = "", fixed = TRUE)
+  data$page <- gsub(x = data$page, pattern = "_", replacement = " ", fixed = TRUE)
   
   #Return
   return(data)
